@@ -18,7 +18,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/api/user',appRouter)
 
 
-
 app.get("/", (req: Request, res: Response) => {
   console.log(process.env.JWT_SECRET);
     res.json("Express + TypeScript Server");

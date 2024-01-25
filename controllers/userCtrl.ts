@@ -2,53 +2,84 @@ import { Request, Response } from "express";
 import jwt from 'jsonwebtoken';
 import asyncHandler from 'express-async-handler';
 import { generateJWT, refreshJWT } from '../config/jwtToken';  // Make sure to import your jwtToken functions
-import { User } from "../Models/Users"; // Make sure to import your User model
+import { prisma } from "../Models/Users";
+import { hashPassword, validateUser } from "../config/HasingPass";
 // import sendMail from './email';  // Assuming sendMail is a TypeScript module
 
 
 const createUser = asyncHandler(async (req: Request, res: Response) => {
     const body = req.body;
-    console.log(body);
-    const findUser = await User.FindOne(body);
-    if (!findUser) {
-        const newUser = await User.CreateOne(body);
-        res.json(newUser);
-    } else {
-        throw new Error("User already Exists");
-    }
+    const hash = await hashPassword(body.password)
+        try{
+            const user = await prisma.user.create({
+             data: {
+                name: body.name,
+                email: body.email,
+                password: hash
+        },
+            });
+             await prisma.favoriteFood.create({
+                    data:{
+                    user: { connect: { id: user.id } },
+                    }
+                });
+                res.json({
+                    id: user.id,
+                    name: user.name,
+                    email: user.email
+                });
+        }
+        catch (err) { throw new Error("User already exists");}
 });
 
-// const loginUserCtrl = asyncHandler(async (req: Request, res: Response) => {
-//     const { email, password } = req.body;
-//     const user:any = await User.FindOne({ email, password });
-//     const refreshToken = await refreshJWT(user?._id);
-//     const updateUser = await User.findByIdAndUpdate(user?.id, { refreshToken }, { new: true });
-//     res.cookie("refreshToken", refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
+const loginUserCtrl = asyncHandler(async (req: Request, res: Response) => {
+    const { email, password } = req.body;
+    try{
+            const user:any = await prisma.user.findFirst({
+             where: {
+                email},
+            });
+            const refreshToken = await refreshJWT(user?._id);           
+            const unhased:any = await validateUser(user.password,password);
+            console.log(unhased);
+            if(unhased){
+                await prisma.user.update({
+                where:{
+                    email: email
+                },
+                data: {
+                    refreshToken
+                }
+            })
+            res.cookie("refreshToken", refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
+                res.json({
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    token: generateJWT(user.id)
+                });
+            }
+            else {throw new Error("Password incorrect");}
+                
+        }
+        catch (err) { throw new Error("Error occured when logging in");}
+});
+//implement Email later for better user verification
+const deleteUser = asyncHandler(async (req: any, res: Response) => {
+    const  id:any  = req.params.id;
 
-//     if (user) {
-//         res.json({
-//             _id: user._id,
-//             name: user.Name,
-//             email: user.email,
-//             token: generateJWT(user._id)
-//         });
-//     } else {
-//         throw new Error("An Error occurred with login");
-//     }
-// });
-
-// const deleteUser = asyncHandler(async (req: Request, res: Response) => {
-//     const { id } = req.params;
-//     try {
-//         const deletedUser = await User.deleteOne({ _id: id });
-//         if (deletedUser.deletedCount === 0) {
-//             throw new Error("User does not exist");
-//         }
-//         res.json({ deletedUser, msg: "User deleted successfully!" });
-//     } catch (err:any) {
-//         throw new Error(err);
-//     }
-// });
+    const idNum:number = Number(id)
+    try {
+        const deleteFood = await prisma.favoriteFood.delete({where:{userId: req.user.id}})
+        const deletedUser = await prisma.user.delete({
+            where:{email: req.user.email}
+        })
+        // console.log(deletedUser);
+        res.json({ name:deletedUser.name, msg: "User deleted successfully!" });
+    } catch (err:any) {
+        throw new Error(err);
+    }
+});
 
 // const updateUser = asyncHandler(async (req: any, res: Response) => {
 //     const { id } = req.user;
@@ -69,16 +100,27 @@ const createUser = asyncHandler(async (req: Request, res: Response) => {
 //     }
 // });
 
-// const logoutUser = asyncHandler(async (req: any, res: any) => {
-//     const cookie = req.cookies;
-//     if (!cookie?.refreshToken) {
-//         throw new Error('Refresh token missing');
-//     }
-//     const refreshToken = cookie.refreshToken;
-//     await User.findOneAndUpdate({ refreshToken }, { refreshToken: "" });
-//     res.clearCookie("refreshToken", { httpOnly: true, secure: true });
-//     return res.sendStatus(204);
-// });
+const logoutUser = asyncHandler(async (req: any, res: any) => {
+    const cookie = req.cookies;
+    console.log(cookie?.refreshToken)
+    if (!cookie?.refreshToken) {
+        throw new Error('Refresh token missing');
+    }
+    try{
+        console.log(req.user.email)
+            await prisma.user.update({
+                where:{
+                    email: req.user.email
+                },
+                data: {
+                    refreshToken: ""
+                }})
+    }
+    catch (err:any) { throw new Error(err) }
+    res.clearCookie("refreshToken", { httpOnly: true, secure: true });
+     res.sendStatus(204);
+     return res.json({msg: "User logged out"})
+});
 
 // const handleRefreshToken = asyncHandler(async (req: Request, res: Response) => {
 //     const cookie = req.cookies;
@@ -132,10 +174,10 @@ const createUser = asyncHandler(async (req: Request, res: Response) => {
 
 export {
     createUser,
-    // loginUserCtrl,
-    // deleteUser,
+    loginUserCtrl,
+    deleteUser,
     // updateUser,
-    // logoutUser,
+    logoutUser,
     // resetPassword,
     // handleRefreshToken,
     // updatePassword

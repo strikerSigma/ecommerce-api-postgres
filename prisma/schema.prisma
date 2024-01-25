@@ -9,3 +9,84 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id                 Int           @id @default(autoincrement())
+  name               String
+  email              String        @unique
+  password           String
+  refreshToken       String?
+  passwordResetToken String?
+  JWTsecret          String?
+  createdAt          DateTime      @default(now())
+  isProMember        Boolean       @default(false)
+  foodCatalogs       FoodCatalog[]
+  favoriteFood       FavoriteFood?
+  targets            Target[]
+  customMeals        CustomMeal[]
+}
+
+model FoodCatalog {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  catalogDate DateTime
+  createdAt   DateTime @default(now())
+  foods       Food[]
+}
+
+model Food {
+  id           Int           @id @default(autoincrement())
+  name         String
+  description  String
+  quantity     Int           @default(1)
+  catalog      FoodCatalog?  @relation(fields: [catalogId], references: [id])
+  catalogId    Int?
+  favoriteFood FavoriteFood? @relation(fields: [favoriteId], references: [id])
+  favoriteId   Int?
+  meal         CustomMeal?   @relation(fields: [mealId], references: [id])
+  mealId       Int?
+  energy       Int           @default(0)
+  protein      Int           @default(0)
+  carbohy      Int           @default(0)
+  fat          Int           @default(0)
+  cholesterol  Int           @default(0)
+  fiber        Int           @default(0)
+  sugar        Int           @default(0)
+  vitamens     Int[]
+  iron         Int           @default(0)
+  cal          Int           @default(0)
+  mag          Int           @default(0)
+  phos         Int           @default(0)
+  pot          Int           @default(0)
+  sod          Int           @default(0)
+  zinc         Int           @default(0)
+}
+
+model FavoriteFood {
+  id     Int    @id @default(autoincrement())
+  user   User   @relation(fields: [userId], references: [id])
+  userId Int    @unique
+  foods  Food[]
+}
+
+model Target {
+  id          Int  @id @default(autoincrement())
+  user        User @relation(fields: [userId], references: [id])
+  userId      Int
+  energy      Int  @default(0)
+  protein     Int  @default(0)
+  carbohy     Int  @default(0)
+  fat         Int  @default(0)
+  cholesterol Int  @default(0)
+  fiber       Int  @default(0)
+  sugar       Int  @default(0)
+}
+
+model CustomMeal {
+  id     Int    @id @default(autoincrement())
+  name   String
+  user   User   @relation(fields: [userId], references: [id])
+  userId Int
+  foods  Food[]
+}
