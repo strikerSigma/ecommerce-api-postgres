@@ -10,14 +10,14 @@ import {
     }
      from '../controllers/userCtrl';
 import {authMiddleware} from  '../middleware/authMiddleware';
-let appRouter = express.Router();
+let authRouter = express.Router();
 
-appRouter.post('/register', createUser);
-appRouter.post('/login', loginUserCtrl);
-appRouter.get('/logout',authMiddleware, logoutUser);
+authRouter.post('/register', createUser);
+authRouter.post('/login', loginUserCtrl);
+authRouter.get('/logout',authMiddleware, logoutUser);
 // appRouter.post('/password',updatePassword);
 // appRouter.post('/password-reset',resetPassword);
-appRouter.delete('/:id',authMiddleware,deleteUser)
+authRouter.delete('/:id',authMiddleware,deleteUser)
 // appRouter.put('/:id',authMiddleware,updateUser)
 // appRouter.get('/refresh',handleRefreshToken)
-export default appRouter;
+export default authRouter;

@@ -11,44 +11,52 @@ const createUser = asyncHandler(async (req: Request, res: Response) => {
     const body = req.body;
     const hash = await hashPassword(body.password)
         try{
-            const user = await prisma.user.create({
+            const user = await prisma.customer.create({
              data: {
                 name: body.name,
                 email: body.email,
-                password: hash
+                password: hash,
+                address: body.address,
+                isSeller: body.isSeller? true : false,
         },
             });
-             await prisma.favoriteFood.create({
-                    data:{
-                    user: { connect: { id: user.id } },
-                    }
-                });
+            console.log(user);
+        const refreshToken = await refreshJWT(user?.id);
+         await prisma.customer.update({
+            where: {
+                id: user.id,
+            },
+            data:{
+                token: refreshToken
+            }
+        }) 
+        res.cookie("refreshToken", refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
                 res.json({
                     id: user.id,
                     name: user.name,
-                    email: user.email
+                    email: user.email,
+                    token: refreshToken
                 });
         }
-        catch (err) { throw new Error("User already exists");}
+        catch (err:any) { throw new Error(err);}
 });
 
 const loginUserCtrl = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
     try{
-            const user:any = await prisma.user.findFirst({
+            const user:any = await prisma.customer.findFirst({
              where: {
                 email},
             });
-            const refreshToken = await refreshJWT(user?._id);           
+            const refreshToken = await refreshJWT(user?.id);           
             const unhased:any = await validateUser(user.password,password);
-            console.log(unhased);
             if(unhased){
-                await prisma.user.update({
+                await prisma.customer.update({
                 where:{
                     email: email
                 },
                 data: {
-                    refreshToken
+                    token: refreshToken
                 }
             })
             res.cookie("refreshToken", refreshToken, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
@@ -62,7 +70,7 @@ const loginUserCtrl = asyncHandler(async (req: Request, res: Response) => {
             else {throw new Error("Password incorrect");}
                 
         }
-        catch (err) { throw new Error("Error occured when logging in");}
+        catch (err:any) { throw new Error(err);}
 });
 //implement Email later for better user verification
 const deleteUser = asyncHandler(async (req: any, res: Response) => {
@@ -70,11 +78,9 @@ const deleteUser = asyncHandler(async (req: any, res: Response) => {
 
     const idNum:number = Number(id)
     try {
-        const deleteFood = await prisma.favoriteFood.delete({where:{userId: req.user.id}})
-        const deletedUser = await prisma.user.delete({
+        const deletedUser = await prisma.customer.delete({
             where:{email: req.user.email}
         })
-        // console.log(deletedUser);
         res.json({ name:deletedUser.name, msg: "User deleted successfully!" });
     } catch (err:any) {
         throw new Error(err);
@@ -107,19 +113,18 @@ const logoutUser = asyncHandler(async (req: any, res: any) => {
         throw new Error('Refresh token missing');
     }
     try{
-        console.log(req.user.email)
-            await prisma.user.update({
+            await prisma.customer.update({
                 where:{
                     email: req.user.email
                 },
                 data: {
-                    refreshToken: ""
+                    token: ""
                 }})
+    res.clearCookie("refreshToken", { httpOnly: true, secure: true });
+     res.json({msg: "User logged out"})
     }
     catch (err:any) { throw new Error(err) }
-    res.clearCookie("refreshToken", { httpOnly: true, secure: true });
-     res.sendStatus(204);
-     return res.json({msg: "User logged out"})
+
 });
 
 // const handleRefreshToken = asyncHandler(async (req: Request, res: Response) => {

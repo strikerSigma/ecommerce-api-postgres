@@ -10,83 +10,108 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id                 Int           @id @default(autoincrement())
-  name               String
-  email              String        @unique
-  password           String
-  refreshToken       String?
-  passwordResetToken String?
-  JWTsecret          String?
-  createdAt          DateTime      @default(now())
-  isProMember        Boolean       @default(false)
-  foodCatalogs       FoodCatalog[]
-  favoriteFood       FavoriteFood?
-  targets            Target[]
-  customMeals        CustomMeal[]
+model Customer {
+  id       String     @id @default(uuid())
+  name     String
+  email    String     @unique
+  password String
+  token    String?
+  address  String?
+  isSeller Boolean    @default(false)
+  Cart     Cart[]
+  Rating   Rating[]
+  Wishlist Wishlist[]
+  Order    Order[]
+  Product  Product[]
 }
 
-model FoodCatalog {
-  id          Int      @id @default(autoincrement())
-  user        User     @relation(fields: [userId], references: [id])
-  userId      Int
-  catalogDate DateTime
-  createdAt   DateTime @default(now())
-  foods       Food[]
+model Product {
+  id            String          @id @default(uuid())
+  name          String
+  count         Int             @default(0)
+  price         Int             @default(0)
+  desc          String?
+  CartToProduct CartToProduct[]
+  ProductColor  ProductColor[]
+  ProductSpecs  ProductSpecs[]
+  Rating        Rating[]
+  Wishlist      Wishlist[]
+  type          type?           @relation(fields: [typeId], references: [id])
+  typeId        String?
+  Customer      Customer?       @relation(fields: [customerId], references: [id])
+  customerId    String?
 }
 
-model Food {
-  id           Int           @id @default(autoincrement())
-  name         String
-  description  String
-  quantity     Int           @default(1)
-  catalog      FoodCatalog?  @relation(fields: [catalogId], references: [id])
-  catalogId    Int?
-  favoriteFood FavoriteFood? @relation(fields: [favoriteId], references: [id])
-  favoriteId   Int?
-  meal         CustomMeal?   @relation(fields: [mealId], references: [id])
-  mealId       Int?
-  energy       Int           @default(0)
-  protein      Int           @default(0)
-  carbohy      Int           @default(0)
-  fat          Int           @default(0)
-  cholesterol  Int           @default(0)
-  fiber        Int           @default(0)
-  sugar        Int           @default(0)
-  vitamens     Int[]
-  iron         Int           @default(0)
-  cal          Int           @default(0)
-  mag          Int           @default(0)
-  phos         Int           @default(0)
-  pot          Int           @default(0)
-  sod          Int           @default(0)
-  zinc         Int           @default(0)
+model type {
+  id      String    @id @default(uuid())
+  name    String
+  Product Product[]
 }
 
-model FavoriteFood {
-  id     Int    @id @default(autoincrement())
-  user   User   @relation(fields: [userId], references: [id])
-  userId Int    @unique
-  foods  Food[]
+model Cart {
+  cart_id       String          @id @default(uuid())
+  customer_id   String          @unique
+  Customer      Customer        @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  CartToProduct CartToProduct[]
 }
 
-model Target {
-  id          Int  @id @default(autoincrement())
-  user        User @relation(fields: [userId], references: [id])
-  userId      Int
-  energy      Int  @default(0)
-  protein     Int  @default(0)
-  carbohy     Int  @default(0)
-  fat         Int  @default(0)
-  cholesterol Int  @default(0)
-  fiber       Int  @default(0)
-  sugar       Int  @default(0)
+model CartToProduct {
+  cart_id    String
+  product_id String
+  itemcount  Int     @default(1)
+  Cart       Cart    @relation(fields: [cart_id], references: [cart_id], onDelete: Cascade)
+  Product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@id([cart_id, product_id])
 }
 
-model CustomMeal {
-  id     Int    @id @default(autoincrement())
-  name   String
-  user   User   @relation(fields: [userId], references: [id])
-  userId Int
-  foods  Food[]
+model ProductColor {
+  product_id String
+  color      String
+  item_count Int     @default(0)
+  imageuri   String?
+
+  Product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@id([color, product_id])
+}
+
+model ProductSpecs {
+  product_id  String
+  specs       String
+  price       Int?   @default(0)
+  items_count Int    @default(0)
+
+  Product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@id([specs, product_id])
+}
+
+model Rating {
+  customer_id String
+  id          String
+  rating      Int
+  review      String?
+  Customer    Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  Product     Product  @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@id([id, customer_id])
+}
+
+model Wishlist {
+  customer_id String   @unique
+  product_id  String
+  Customer    Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  Product     Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@id([customer_id, product_id])
+}
+
+model Order {
+  order_id   String   @id
+  product_id String[]
+  address    String
+  time       DateTime @default(now())
+
+  Customer Customer @relation(fields: [order_id], references: [id], onDelete: Cascade)
 }

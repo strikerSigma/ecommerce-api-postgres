@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import { prisma } from "../Models/Users";
 import jwt from 'jsonwebtoken';
 import asyncHandler from 'express-async-handler';
-import { User } from "../Models/Users";  // Make sure to import your User model
 
 export const authMiddleware = asyncHandler(async (req: any, res: Response, next: NextFunction) => {
   let token;
@@ -12,8 +11,8 @@ export const authMiddleware = asyncHandler(async (req: any, res: Response, next:
     try {
       if (token) {
         const decoded: any = jwt.verify(token, process.env.JWT_SECRET as string);
-        // console.log(decoded);
-        const user:any = await prisma.user.findFirst({
+        console.log(decoded);
+        const user:any = await prisma.customer.findFirst({
             where:{id: decoded?.id}
         })
         // console.log("From middleware: "+user.name)
@@ -28,6 +27,12 @@ export const authMiddleware = asyncHandler(async (req: any, res: Response, next:
   }
 });
 
+export const allowCrossDomain = asyncHandler(async(req:any, res:any, next:any)=>{
+    res.header('Access-Control-Allow-Origin', "*");
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+}) 
 // const isAdmin = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
 //   const { email } = req.user ;  // Assuming email is present in User model
 //   const adminUser = await User.FindOne({ email });
