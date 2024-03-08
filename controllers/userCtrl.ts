@@ -64,6 +64,8 @@ const loginUserCtrl = asyncHandler(async (req: Request, res: Response) => {
                     id: user.id,
                     name: user.name,
                     email: user.email,
+                    address: user.address,
+                    isSeller: user.isSeller,
                     token: generateJWT(user.id)
                 });
             }
@@ -87,6 +89,13 @@ const deleteUser = asyncHandler(async (req: any, res: Response) => {
     }
 });
 
+const verifyUser = asyncHandler( async(req:any,res)=>{
+    try{
+        res.json({verify:"user verified successfully"})
+    }
+    catch(err:any){throw new Error(err);}
+})
+
 // const updateUser = asyncHandler(async (req: any, res: Response) => {
 //     const { id } = req.user;
 //     try {
@@ -107,11 +116,8 @@ const deleteUser = asyncHandler(async (req: any, res: Response) => {
 // });
 
 const logoutUser = asyncHandler(async (req: any, res: any) => {
-    const cookie = req.cookies;
-    console.log(cookie?.refreshToken)
-    if (!cookie?.refreshToken) {
-        throw new Error('Refresh token missing');
-    }
+
+
     try{
             await prisma.customer.update({
                 where:{
@@ -183,6 +189,7 @@ export {
     deleteUser,
     // updateUser,
     logoutUser,
+    verifyUser
     // resetPassword,
     // handleRefreshToken,
     // updatePassword

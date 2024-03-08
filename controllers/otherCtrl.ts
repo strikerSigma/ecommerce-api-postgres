@@ -1,12 +1,15 @@
 import { Request, Response } from "express";
-import jwt from 'jsonwebtoken';
 import asyncHandler from 'express-async-handler';  
 import { prisma } from "../Models/Users";
-import { hashPassword, validateUser } from "../config/HasingPass";
+
 
 const createProduct = asyncHandler(async(req:any,res)=>{
     if(!req.user.isSeller) throw new Error("not a Seller");
     try{
+        if(!req.body.color || !req.body.URI || !req.body.count || !req.body.price) {throw new Error('try again ')}
+        const color = String(req.body.color).split('|');
+        const URI = String(req.body.URI).split('|');
+        const count =  String(req.body.count).split('|');
         let type = await prisma.type.findFirst({
             where:{
                 name: {
@@ -34,9 +37,6 @@ const createProduct = asyncHandler(async(req:any,res)=>{
             }
         })
         console.log(product);
-        const color = String(req.body.color).split('|');
-        const URI = String(req.body.URI).split('|');
-        const count =  String(req.body.count).split('|');
         console.log(color,count,URI);
          for(let i in color){
             await prisma.productColor.create({
@@ -66,11 +66,14 @@ const createProduct = asyncHandler(async(req:any,res)=>{
 });
 
 
-const AddtoCart = asyncHandler(async(req:any,res)=>{
+const AddtoCart = asyncHandler(async(req:any,res:any)=>{
     
     try{
         const {id} = req.params;
         const count = Number(req.query.count);
+        const color = String(req.query.color);
+        const specs = String(req.query.specs);
+
         let cart = await prisma.cart.findFirst({
             where:{
                 customer_id: req.user.id,
@@ -83,20 +86,141 @@ const AddtoCart = asyncHandler(async(req:any,res)=>{
                 }
             })
         }
-        const cartToProduct = await prisma.cartToProduct.create({
+        
+const cartToProduct = await prisma.cartToProduct.create({
             data:{
                 cart_id: cart.cart_id,
                 product_id: String(id),
                 itemcount: count? count: 1,
+                specs,
+                color
+                
             }
         })
+        console.log(cartToProduct)
         res.json({cartToProduct});
     }
     catch(err:any){throw new Error(err)}
     
 })
 
+const EditProfile = asyncHandler(async(req:any,res)=>{
+    try{
+        
+        const user:any = await prisma.customer.update({
+            where:{
+                id: req.user.id
+            },
+            data: {
+                name: req.body.name,
+                address: req.body.address,
+                email: req.body.email
+            }
+        });
+        console.log("updated")
+        res.json({
+            name: user.name,
+            address: user.address,
+            email: user.email
+        })
+    }
+    catch(err:any){throw new Error(err)}
+})
+
+
+const DeleteProduct = asyncHandler(async(req:any,res)=>{
+    const ID = String(req.params.id);
+    try{
+       const product = await prisma.product.delete({
+        where:{
+            id: ID
+        }
+       })
+        res.json({
+            product
+        })
+    }
+    catch(err:any){throw new Error(err)}
+})
+
+const RemoveCartProduct = asyncHandler(async(req:any,res)=>{
+    try{
+        const ID = String(req.params.id);
+        const cart:any = await prisma.cart.findFirst({
+            where:{
+                customer_id: String(req.user.id)
+            }
+        });
+        console.log(cart);
+        const cartToProduct = await prisma.cartToProduct.delete({
+            where:{
+                cart_id_product_id: {
+                    cart_id: cart.cart_id,
+                    product_id: ID
+                }  
+            }
+        })
+        res.json({cartToProduct})
+    }
+    catch(e:any){
+        throw new Error(e);
+    }
+});
+
+const RemoveWishlistProduct = asyncHandler(async(req:any,res)=>{
+    try{
+        const ID = String(req.params.id);
+        const wishlist = await prisma.wishlist.delete({
+            where:{
+                 customer_id_product_id:{
+                    customer_id: String(req.user.id),
+                    product_id:ID
+                 }
+            }
+        })
+        res.json({wishlist})
+    }
+    catch(e:any){
+        throw new Error(e);
+    }
+});
+const AddtoWishlist = asyncHandler(async(req:any,res)=>{
+    try{
+        const ID = String(req.params.id);
+        const wishlist:any = await prisma.wishlist.create({
+            data:{
+                customer_id: String(req.user.id),
+                product_id: ID
+            }
+        });
+        
+        res.json({wishlist})
+    }
+    catch(e:any){
+        throw new Error(e);
+    }
+});
+
+
+const uploadImage = asyncHandler(async(req:any,res)=>{
+    try{
+        console.log(req.file.filename);
+        if(!req.user.isSeller) throw new Error("not a Seller");
+        res.json(req.file);
+    }
+    catch(e:any){
+        console.log(e);
+        throw new Error(e);
+    }
+})
+
 export {
     createProduct,
-    AddtoCart
+    AddtoCart,
+    EditProfile,
+    AddtoWishlist,
+    DeleteProduct,
+    RemoveCartProduct,
+    RemoveWishlistProduct,
+    uploadImage
 }

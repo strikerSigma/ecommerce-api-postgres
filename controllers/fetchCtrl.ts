@@ -7,7 +7,7 @@ import { hashPassword, validateUser } from "../config/HasingPass";
 const fetchProducts = asyncHandler(async(req,res)=>{
     try{
         
-        let {search,page,category,price} = req?.query;
+        let {page,category,price} = req?.query;
         
         let minprice=0;
         let priceRange;
@@ -25,10 +25,6 @@ const fetchProducts = asyncHandler(async(req,res)=>{
 
         const products = await prisma.product.findMany({
         where:{
-            name: {
-                    contains: String(search) ,
-                    mode: 'insensitive',
-            },
             price: {
             gte: minprice,  // Minimum price
             lte: priceRange, // Maximum price
@@ -44,11 +40,43 @@ const fetchProducts = asyncHandler(async(req,res)=>{
         include: {
             type: true
         },
-        skip:21*(Number(page)-1),
-        take: 21, 
+        skip:9*(Number(page)-1),
+        take: 9, 
         orderBy: { id: 'asc' }, 
         });
         console.log(products)
+        const colorsPromises = products.map(async (product) => {
+            return await prisma.productColor.findFirst({
+                where: {
+                    product_id: product.id,
+                }
+            });
+        });
+
+        const colors = await Promise.all(colorsPromises);
+        res.json({products,colors});
+    }
+    catch(err:any){ throw new Error(err); }
+})
+
+const SearchProducts = asyncHandler(async(req:any,res)=>{
+    try{
+        const search = req.query.search;
+        const page = Number(req.query.page);
+        const products = await prisma.product.findMany({
+            where:{
+                name:{
+                    contains: String(search),
+                    mode: 'insensitive'
+                }
+            },
+            include:{
+                type: true
+            },
+            skip:9*(Number(page)-1),
+            take: 9, 
+            orderBy: { id: 'asc' }, 
+        })
         const colorsPromises = products.map(async (product) => {
             return await prisma.productColor.findFirst({
                 where: {
@@ -102,13 +130,12 @@ const fetchProductsById = asyncHandler(async(req,res)=>{
                     product_id: products?.id,
                 }
             });
-            console.log(colors);
          const specs = await prisma.productSpecs.findMany({
                 where: {
                     product_id: products?.id,
                 }
             });
-            
+        console.log("request ",products,colors,specs)
         res.json({products,colors,specs});
     }
     catch(err:any){ throw new Error(err); }
@@ -128,13 +155,53 @@ const fetchCart = asyncHandler(async(req:any,res)=>{
         }
     })
     }
-    res.json({cart})
+    let cartToProduct = await prisma.cartToProduct.findMany({
+        where: {
+            cart_id: cart.cart_id
+        },
+        include:{
+            Product: true
+        }
+    });
+    for(let i in cartToProduct){
+        const color:any = await prisma.productColor.findFirst({
+            where:{
+                product_id: cartToProduct[i].Product.id,
+                color: String(cartToProduct[i].color)
+            }
+        });
+        const specs:any = await prisma.productSpecs.findFirst({
+            where:{
+                product_id: cartToProduct[i].Product.id,
+                specs: String(cartToProduct[i].specs)
+            }
+        }); 
+        cartToProduct[i].color = color;
+        cartToProduct[i].specs = specs;
+    }
+
+    console.log(cartToProduct);
+    res.json({cart:cartToProduct})
     }
     catch (err:any) { throw new Error(err); }
+});
+
+const fetchWishlist = asyncHandler(async(req:any,res)=>{
+    try{
+        const wishlist = await prisma.wishlist.findMany({
+            where:{
+                customer_id: String(req.user.id)
+            }
+        })
+        res.json({wishlist})
+    }
+    catch(e:any){throw new Error(e);}
 })
 export {
     fetchProducts,
     fetchProductsCategory,
     fetchCart,
-    fetchProductsById
+    fetchProductsById,
+    fetchWishlist,
+    SearchProducts
 }

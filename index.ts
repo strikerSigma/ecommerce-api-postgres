@@ -7,6 +7,8 @@ import { notFound, errorHandler } from './middleware/errorHandler';
 import authRouter from "./routes/authRoutes";
 import appRouter from "./routes/AppRoutes";
 import cors from 'cors';
+import multer from 'multer';
+import path from 'path';
 
 
 dotenv.config();
@@ -32,6 +34,18 @@ app.get("/test", (req: Request, res: Response) => {
   console.log("up and running");
     res.json("Express + TypeScript Server");
 });
+const storage = multer.diskStorage({
+    destination: (req,file,cb)=>{
+        cb(null,'public/images')
+    },
+    filename: (req,file,cb)=>{
+        cb(null,file.fieldname+'_'+Date.now()+path.extname(file.originalname))
+    }
+});
+
+export const upload =  multer({
+    storage
+})
 app.use(notFound);
 app.use(errorHandler)
 

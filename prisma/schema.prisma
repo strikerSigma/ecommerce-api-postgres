@@ -16,7 +16,7 @@ model Customer {
   email    String     @unique
   password String
   token    String?
-  address  String?
+  address  String     @default("")
   isSeller Boolean    @default(false)
   Cart     Cart[]
   Rating   Rating[]
@@ -58,6 +58,8 @@ model Cart {
 model CartToProduct {
   cart_id    String
   product_id String
+  specs      String?
+  color      String?
   itemcount  Int     @default(1)
   Cart       Cart    @relation(fields: [cart_id], references: [cart_id], onDelete: Cascade)
   Product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
@@ -99,7 +101,7 @@ model Rating {
 }
 
 model Wishlist {
-  customer_id String   @unique
+  customer_id String
   product_id  String
   Customer    Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
   Product     Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
@@ -108,10 +110,13 @@ model Wishlist {
 }
 
 model Order {
-  order_id   String   @id
-  product_id String[]
-  address    String
-  time       DateTime @default(now())
+  order_id    String   @id
+  customer_id String
+  product_id  String[]
+  quantity    Int[]
+  price       Int[]
+  address     String
+  time        DateTime @default(now())
 
-  Customer Customer @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  Customer Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
 }

@@ -19,20 +19,16 @@ export const authMiddleware = asyncHandler(async (req: any, res: Response, next:
         req.user = user;
         next();
       }
-    } catch (e) {
-      throw new Error("Not authorized, token expired, please login again");
+    } catch (e:any) {
+      console.log(e);
+      throw new Error(e+' :Not Authorized');
     }
   } else {
     throw new Error("No token attached to request");
   }
 });
 
-export const allowCrossDomain = asyncHandler(async(req:any, res:any, next:any)=>{
-    res.header('Access-Control-Allow-Origin', "*");
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    res.header('Access-Control-Allow-Headers', 'Content-Type');
-    next();
-}) 
+
 // const isAdmin = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
 //   const { email } = req.user ;  // Assuming email is present in User model
 //   const adminUser = await User.FindOne({ email });
