@@ -119,10 +119,13 @@ const fetchProductsCategory = asyncHandler(async(req,res)=>{
 const fetchProductsById = asyncHandler(async(req,res)=>{
     try{
         const {id} = req?.params;
-        const products = await prisma.product.findFirst({
+        const products = await prisma.product.update({
         where:{
             id: String(id)
         },
+        data:{
+            views: { increment: 1 }
+        }
         });
 
          const colors = await prisma.productColor.findMany({
@@ -179,7 +182,7 @@ const fetchCart = asyncHandler(async(req:any,res)=>{
         cartToProduct[i].color = color;
         cartToProduct[i].specs = specs;
     }
-
+   
     console.log(cartToProduct);
     res.json({cart:cartToProduct})
     }

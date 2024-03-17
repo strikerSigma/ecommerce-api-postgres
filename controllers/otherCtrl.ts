@@ -202,17 +202,7 @@ const AddtoWishlist = asyncHandler(async(req:any,res)=>{
 });
 
 
-const uploadImage = asyncHandler(async(req:any,res)=>{
-    try{
-        console.log(req.file.filename);
-        if(!req.user.isSeller) throw new Error("not a Seller");
-        res.json(req.file);
-    }
-    catch(e:any){
-        console.log(e);
-        throw new Error(e);
-    }
-})
+
 
 export {
     createProduct,
@@ -222,5 +212,4 @@ export {
     DeleteProduct,
     RemoveCartProduct,
     RemoveWishlistProduct,
-    uploadImage
 }

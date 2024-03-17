@@ -43,7 +43,20 @@ const CheckOut = asyncHandler(async(req:any,res)=>{
                 address: req.user.address
             }
         })
+        req.body.items.map(async(item:any) => {
+            const Sold=    await prisma.product.update({
+                    where:{
+                        id: String(item.order.Product.id)
+                    },
+                    data:{
+                        sold: Number(item.count)
+                    }
+                })
+            console.log(Sold);
+                
+            }),
         
+
         console.log(session);
         res.json({url: session.url})
     }

@@ -11,18 +11,23 @@ datasource db {
 }
 
 model Customer {
-  id       String     @id @default(uuid())
-  name     String
-  email    String     @unique
-  password String
-  token    String?
-  address  String     @default("")
-  isSeller Boolean    @default(false)
-  Cart     Cart[]
-  Rating   Rating[]
-  Wishlist Wishlist[]
-  Order    Order[]
-  Product  Product[]
+  id             String          @id @default(uuid())
+  name           String
+  email          String          @unique
+  password       String
+  profileuri     String?
+  token          String?
+  address        String          @default("")
+  isSeller       Boolean         @default(false)
+  Cart           Cart[]
+  Rating         Rating[]
+  Wishlist       Wishlist[]
+  Order          Order[]
+  Product        Product[]
+  Analytics      Analytics[]
+  ReviewSeller   Review[]        @relation("SellerReviews")
+  ReviewCustomer Review[]        @relation("CustomerReviews")
+  Notifications  Notifications[]
 }
 
 model Product {
@@ -31,6 +36,8 @@ model Product {
   count         Int             @default(0)
   price         Int             @default(0)
   desc          String?
+  views         Int             @default(0)
+  sold          Int             @default(0)
   CartToProduct CartToProduct[]
   ProductColor  ProductColor[]
   ProductSpecs  ProductSpecs[]
@@ -40,6 +47,37 @@ model Product {
   typeId        String?
   Customer      Customer?       @relation(fields: [customerId], references: [id])
   customerId    String?
+  Review        Review[]
+}
+
+model Analytics {
+  id         String    @id @default(uuid())
+  sales      Int
+  orders     String[]
+  views      Int
+  Customer   Customer? @relation(fields: [customerId], references: [id])
+  customerId String?
+  time       DateTime  @default(now())
+}
+
+model Review {
+  id         String    @id @default(uuid())
+  review     Int
+  comment    String?
+  reply      String?
+  productId  String?
+  Product    Product?  @relation(fields: [productId], references: [id])
+  sellerId   String?
+  Seller     Customer? @relation("SellerReviews", fields: [sellerId], references: [id])
+  customerId String?
+  Customer   Customer? @relation("CustomerReviews", fields: [customerId], references: [id])
+}
+
+model Notifications {
+  id            String    @id @default(uuid())
+  notifications String[]
+  customerId    String?
+  Customer      Customer? @relation(fields: [customerId], references: [id])
 }
 
 model type {
@@ -116,6 +154,7 @@ model Order {
   quantity    Int[]
   price       Int[]
   address     String
+  status      String   @default("pending")
   time        DateTime @default(now())
 
   Customer Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
