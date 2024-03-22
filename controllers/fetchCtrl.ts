@@ -200,11 +200,44 @@ const fetchWishlist = asyncHandler(async(req:any,res)=>{
     }
     catch(e:any){throw new Error(e);}
 })
+
+const fetchRatings = asyncHandler(async(req:any,res)=>{
+    try{
+        const {id} = req.params;
+        const ratings = await prisma.review.findMany({
+            where:{
+                productId: String(id)
+            }
+        });
+        let customers =[] ;
+        for(let i of ratings){
+            customers.push(
+                await prisma.customer.findFirst({
+                where:{
+                    id: String(i.customerId)
+                },
+                select:{
+                    email: true,
+                    name: true,
+                    profileuri: true
+                }
+            })
+            ) 
+        }
+       console.log(ratings,customers)
+
+        res.json({ratings,customers})
+    }
+    catch(e:any){
+        throw new Error(e)
+    }
+});
 export {
     fetchProducts,
     fetchProductsCategory,
     fetchCart,
     fetchProductsById,
     fetchWishlist,
-    SearchProducts
+    SearchProducts,
+    fetchRatings
 }

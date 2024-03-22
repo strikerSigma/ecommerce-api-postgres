@@ -96,24 +96,7 @@ const verifyUser = asyncHandler( async(req:any,res)=>{
     catch(err:any){throw new Error(err);}
 })
 
-// const updateUser = asyncHandler(async (req: any, res: Response) => {
-//     const { id } = req.user;
-//     try {
-//         const updatedUser = await User.findByIdAndUpdate({ _id: id }, {
-//             firstName: req?.user?.firstName,
-//             lastName: req?.user?.lastName,
-//             email: req?.user?.email,
-//             mobile: req?.user?.mobile,
-//             password: req?.user?.password
-//         });
-//         if (!updatedUser) {
-//             throw new Error("User does not exist");
-//         }
-//         res.json({ msg: "User updated successfully!" });
-//     } catch (err:any) {
-//         throw new Error(err);
-//     }
-// });
+
 
 const logoutUser = asyncHandler(async (req: any, res: any) => {
 
@@ -133,21 +116,51 @@ const logoutUser = asyncHandler(async (req: any, res: any) => {
 
 });
 
-// const handleRefreshToken = asyncHandler(async (req: Request, res: Response) => {
-//     const cookie = req.cookies;
-//     if (!cookie?.refreshToken) {
-//         throw new Error('Refresh token missing');
-//     }
-//     const refreshToken = cookie.refreshToken;
-//     const user:any = await User.FindOne({ refreshToken });
-//     if(! process.env.JWT_SECRET) throw new Error('JWT key not available')
-//     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
-//     if (!user) {
-//         throw new Error('Express token expired');
-//     }
-//     const newToken = refreshJWT(user?._id);
-//     res.json({ newToken });
-// });
+const Review = asyncHandler(async (req: any, res: any) => {
+
+    try{
+            
+            const {product_id, order_id, comment, review } = req.body;
+            
+            const order = await prisma.order.findFirst({
+                where:{
+                    order_id: String(order_id),
+                    product_id: {
+                        hasSome: [String(product_id)]
+                    },
+                    customer_id: String(req.user.id)
+                }
+            })
+            if(!order) {throw new Error('User not Authorized for the review!');}
+            const product = await prisma.product.findFirst({
+                where:{
+                    id: String(product_id)
+                }
+            })
+            const ExistRating = await prisma.review.findFirst({
+                where:{
+                    
+                    customerId: String(req.user.id),
+                    productId: String(product_id)
+                }
+            })
+
+            if(ExistRating) {throw new Error('the user has already rated this product!');}
+            const rating  = await prisma.review.create({
+                data:{
+                    productId: String(product_id),
+                    customerId: String(req.user.id),
+                    sellerId: String(product?.customerId),
+                    comment: String(comment),
+                    review: Number(review),
+                }
+            })
+
+     res.json(rating)
+    }
+    catch (err:any) { throw new Error(err) }
+
+});
 
 // const updatePassword = asyncHandler(async (req: Request, res: Response) => {
 //     const { email } = req.body;
@@ -168,20 +181,7 @@ const logoutUser = asyncHandler(async (req: any, res: any) => {
 //     res.json({ message: "Token has been sent to your email" });
 // });
 
-// const resetPassword = asyncHandler(async (req: Request, res: Response) => {
-//     const { email, token, password } = req.body;
-//     const user:any = await User.FindOne({ email });
-//     const decodedToken = jwt.verify(token, user.JWTsecret);
-//     if (!decodedToken) {
-//         throw new Error('Invalid token');
-//     }
-//     const updatedUser = await User.updateOne({ email }, {
-//         password,
-//         passwordResetToken: null,
-//         JWTsecret: null
-//     });
-//     res.json({ message: "Password has been successfully updated" });
-// });
+
 
 export {
     createUser,
@@ -189,7 +189,8 @@ export {
     deleteUser,
     // updateUser,
     logoutUser,
-    verifyUser
+    verifyUser,
+    Review
     // resetPassword,
     // handleRefreshToken,
     // updatePassword

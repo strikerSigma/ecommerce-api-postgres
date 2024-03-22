@@ -1,9 +1,10 @@
 import express from 'express';
 
 import {authMiddleware} from  '../middleware/authMiddleware';
-import { SearchProducts, fetchCart, fetchProducts, fetchProductsById, fetchProductsCategory, fetchWishlist } from '../controllers/fetchCtrl';
+import { SearchProducts, fetchCart, fetchProducts, fetchProductsById, fetchProductsCategory, fetchRatings, fetchWishlist } from '../controllers/fetchCtrl';
 import { AddtoCart, AddtoWishlist, DeleteProduct, EditProfile, RemoveCartProduct, RemoveWishlistProduct, createProduct } from '../controllers/otherCtrl';
 import { CheckOut, fetchOrders } from '../controllers/handlePayment';
+import { Review } from '../controllers/userCtrl';
 
 
 
@@ -20,6 +21,8 @@ appRouter.get('/add-to-cart/:id',authMiddleware, AddtoCart);
 appRouter.get('/add-to-wishlist/:id',authMiddleware, AddtoWishlist); 
 appRouter.get('/get-orders',authMiddleware, fetchOrders); 
 appRouter.post('/checkout',authMiddleware, CheckOut); 
+appRouter.post('/review',authMiddleware, Review); 
+appRouter.get('/fetch-ratings/:id', fetchRatings); 
 // appRouter.post('/upload-image',authMiddleware,upload.single('image'), uploadImage); 
 appRouter.delete('/delete-product/:id',authMiddleware, DeleteProduct); 
 appRouter.delete('/remove-product-cart/:id',authMiddleware, RemoveCartProduct); 

@@ -67,11 +67,25 @@ const CheckOut = asyncHandler(async(req:any,res)=>{
 
 const fetchOrders = asyncHandler(async(req:any,res)=>{
     try{
-        const orders = await prisma.order.findMany({
+        const orders:any = await prisma.order.findMany({
             where:{
                 customer_id: String(req.user.id)
             }
         });
+        for(let i of orders){
+            let name:any = [];
+            for(let a of i.product_id){
+                const prod = await prisma.product.findFirst({
+                    where:{
+                        id: a
+                    }
+                })
+                name.push(prod?.name)
+            }
+           
+            i.name = name;
+        }
+        console.log(orders)
         res.json(orders);
     }
     catch(e:any){
