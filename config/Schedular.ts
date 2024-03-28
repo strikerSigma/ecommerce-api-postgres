@@ -6,7 +6,8 @@ export const job = new CronJob(
 	async function () {
     
   try{
-     await prisma.analytics.deleteMany();
+     
+    console.log(await prisma.order.findMany())
       const today = new Date();
       const yesterday = new Date(today);
       yesterday.setDate(today.getDate() - 1); // Subtract 1 day
@@ -58,14 +59,18 @@ export const job = new CronJob(
           }
         }
        });
+       console.log(pastAnalytics,startDate,endDate,temp)
        if(!pastAnalytics){ pastAnalytics = {
           sales: 0,
           views:0,
           Revenue: 0
        }; }
-       if(sales-pastAnalytics.sales < 0) sales =0;
-       if(views-pastAnalytics.views < 0) views =0;
-       if(Revenue-pastAnalytics.Revenue < 0) Revenue =0;
+       sales = sales-pastAnalytics.sales;
+       views = views-pastAnalytics.views;
+       Revenue = Revenue-pastAnalytics.Revenue;
+       if(sales < 0) sales =0;
+       if(views < 0) views =0;
+       if(Revenue < 0) Revenue =0;
       const analytics =   await prisma.analytics.create({
           data:{
             sales,
