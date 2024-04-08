@@ -64,6 +64,6 @@ job.start();
 app.use(notFound);
 app.use(errorHandler)
 
-app.listen(port, () => {
+app.listen(process.env.PORT || port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
 });
