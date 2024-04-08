@@ -7,7 +7,7 @@ const stripe = new Stripe(String(process.env.STRIPE_KEY));
 
 const CheckOut = asyncHandler(async(req:any,res)=>{
     try{
-        // console.log(req.body.items);
+        console.log(req.body.items);
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             mode: 'payment',
@@ -27,6 +27,8 @@ const CheckOut = asyncHandler(async(req:any,res)=>{
             cancel_url: `${process.env.CLIENT_URL}/failure`
         });
         
+        if(session.url === `${process.env.CLIENT_URL}/failure`) {res.json({url: session.url})}
+
          await prisma.order.create({
             data:{
                 customer_id: String(req.user.id),
@@ -49,7 +51,9 @@ const CheckOut = asyncHandler(async(req:any,res)=>{
                         id: String(item.order.Product.id)
                     },
                     data:{
-                        sold: Number(item.count)
+                        sold: {
+                            increment: Number(item.count)
+                        },
                     }
                 })
             console.log(Sold);

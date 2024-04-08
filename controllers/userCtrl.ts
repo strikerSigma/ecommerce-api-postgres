@@ -17,7 +17,7 @@ const createUser = asyncHandler(async (req: Request, res: Response) => {
                 email: body.email,
                 password: hash,
                 address: body.address,
-                isSeller: body.isSeller? true : false,
+                isSeller: false,
         },
             });
             console.log(user);
@@ -44,6 +44,7 @@ const createUser = asyncHandler(async (req: Request, res: Response) => {
 const loginUserCtrl = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
     try{
+        console.log(email);
             const user:any = await prisma.customer.findFirst({
              where: {
                 email},
@@ -91,7 +92,10 @@ const deleteUser = asyncHandler(async (req: any, res: Response) => {
 
 const verifyUser = asyncHandler( async(req:any,res)=>{
     try{
-        res.json({verify:"user verified successfully"})
+        
+        res.json({
+            Role: req.user.isSeller
+        })
     }
     catch(err:any){throw new Error(err);}
 })
@@ -132,6 +136,7 @@ const Review = asyncHandler(async (req: any, res: any) => {
                 }
             })
             if(!order) {throw new Error('User not Authorized for the review!');}
+            if(order.status !== 'delivered') {throw new Error('Product not recieved yet!');}
             const product = await prisma.product.findFirst({
                 where:{
                     id: String(product_id)
@@ -139,15 +144,14 @@ const Review = asyncHandler(async (req: any, res: any) => {
             })
             const ExistRating = await prisma.review.findFirst({
                 where:{
-                    
-                    customerId: String(req.user.id),
-                    productId: String(product_id)
+                    id: String(product_id)+String(order_id),
                 }
             })
 
             if(ExistRating) {throw new Error('the user has already rated this product!');}
             const rating  = await prisma.review.create({
                 data:{
+                    id: String(product_id)+String(order_id),
                     productId: String(product_id),
                     customerId: String(req.user.id),
                     sellerId: String(product?.customerId),
@@ -181,7 +185,27 @@ const Review = asyncHandler(async (req: any, res: any) => {
 //     res.json({ message: "Token has been sent to your email" });
 // });
 
+const userRecommendation = asyncHandler(async(req:any,res)=>{
+    try{
+        
+        const products = await prisma.product.findMany({
+            take: 8
+        });
 
+         const colorsPromises = products.map(async (product) => {
+            return await prisma.productColor.findFirst({
+                where: {
+                    product_id: product.id,
+                }
+            });
+        });
+
+        const colors = await Promise.all(colorsPromises);
+
+        res.json({products,colors})
+    }
+    catch (err:any) { throw new Error(err) }
+})
 
 export {
     createUser,
@@ -190,8 +214,8 @@ export {
     // updateUser,
     logoutUser,
     verifyUser,
-    Review
+    Review,
     // resetPassword,
     // handleRefreshToken,
-    // updatePassword
+    userRecommendation
 };

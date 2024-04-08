@@ -8,7 +8,6 @@ const fetchProducts = asyncHandler(async(req,res)=>{
     try{
         
         let {page,category,price} = req?.query;
-        
         let minprice=0;
         let priceRange;
         if(!price){priceRange = 0}else{priceRange=Number(price);}
@@ -52,6 +51,7 @@ const fetchProducts = asyncHandler(async(req,res)=>{
                 }
             });
         });
+
 
         const colors = await Promise.all(colorsPromises);
         res.json({products,colors});
@@ -138,8 +138,14 @@ const fetchProductsById = asyncHandler(async(req,res)=>{
                     product_id: products?.id,
                 }
             });
-        console.log("request ",products,colors,specs)
-        res.json({products,colors,specs});
+
+        const category = await prisma.type.findFirst({
+            where: {
+                Product: { some: { id: String(id) } } // Check if any product has the provided ID
+            }
+        });
+        console.log("request ",products,colors,specs,category)
+        res.json({products,colors,specs,category});
     }
     catch(err:any){ throw new Error(err); }
 })
@@ -232,6 +238,8 @@ const fetchRatings = asyncHandler(async(req:any,res)=>{
         throw new Error(e)
     }
 });
+
+
 export {
     fetchProducts,
     fetchProductsCategory,

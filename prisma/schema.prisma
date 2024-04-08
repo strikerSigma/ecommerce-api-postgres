@@ -11,21 +11,20 @@ datasource db {
 }
 
 model Customer {
-  id             String          @id @default(uuid())
+  id             String     @id @default(uuid())
   name           String
-  email          String          @unique
+  email          String     @unique
   password       String
-  profileuri     String?         @default("download.jpg")
+  profileuri     String?
   token          String?
-  address        String          @default("")
-  isSeller       Boolean         @default(false)
+  address        String     @default("")
+  isSeller       Boolean    @default(false)
   Cart           Cart[]
   Wishlist       Wishlist[]
   Order          Order[]
   Product        Product[]
-  ReviewSeller   Review[]        @relation("SellerReviews")
-  ReviewCustomer Review[]        @relation("CustomerReviews")
-  Notifications  Notifications[]
+  ReviewSeller   Review[]   @relation("SellerReviews")
+  ReviewCustomer Review[]   @relation("CustomerReviews")
 }
 
 model Product {
@@ -58,24 +57,26 @@ model Analytics {
 }
 
 model Review {
-  id         String    @id @default(uuid())
-  review     Int
-  comment    String?
-  reply      String?
-  productId  String?
-  Product    Product?  @relation(fields: [productId], references: [id])
-  sellerId   String?
-  Seller     Customer? @relation("SellerReviews", fields: [sellerId], references: [id])
-  customerId String?
-  Customer   Customer? @relation("CustomerReviews", fields: [customerId], references: [id])
-  time       DateTime  @default(now())
+  id              String         @id @default(uuid())
+  review          Int
+  comment         String?
+  reply           String?
+  productId       String?
+  Product         Product?       @relation(fields: [productId], references: [id])
+  sellerId        String?
+  Seller          Customer?      @relation("SellerReviews", fields: [sellerId], references: [id])
+  customerId      String?
+  Customer        Customer?      @relation("CustomerReviews", fields: [customerId], references: [id])
+  time            DateTime       @default(now())
+  Notifications   Notifications? @relation(fields: [notificationsId], references: [id])
+  notificationsId String?
 }
 
 model Notifications {
-  id            String    @id @default(uuid())
-  notifications String[]
-  customerId    String?
-  Customer      Customer? @relation(fields: [customerId], references: [id])
+  id           String   @id @default(uuid())
+  notification String?
+  review       Review[]
+  time         DateTime @default(now())
 }
 
 model type {
