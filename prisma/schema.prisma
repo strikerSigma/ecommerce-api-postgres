@@ -62,6 +62,7 @@ model Review {
   comment         String?
   reply           String?
   productId       String?
+  dismiss         Boolean        @default(false)
   Product         Product?       @relation(fields: [productId], references: [id])
   sellerId        String?
   Seller          Customer?      @relation("SellerReviews", fields: [sellerId], references: [id])

@@ -119,6 +119,12 @@ const FetchCustomerbyID = asyncHandler(async(req:any,res)=>{
         const customer = await prisma.customer.findUnique({
             where:{
                 id: req.params.id
+            },
+           select:{
+                email: true,
+                name: true,
+                address: true,
+                profileuri: true,
             }
         });
         res.json({customer})
@@ -310,13 +316,66 @@ const fetchCustomers = asyncHandler(async(req:any,res)=>{
             }
          })
          console.log(customers)
-         let notifications:any = await prisma.notifications.findMany();
-         notifications = [{
-            notification :'Someone just commented on a product lmao'
-         },{}]
+         let notifications:any = await prisma.review.findMany({
+            where:{
+             dismiss: false,
+             reply: null   
+            }
+         })
          console.log(customers, notifications)
          
          res.json({customers,notifications});
+    }
+    catch(err:any){
+        throw new Error(err);
+    }
+});
+
+
+const replyReview = asyncHandler(async(req:any,res)=>{
+    try{
+         if(!req.user.isSeller) throw new Error("not a Seller");
+        const reply= req.body.reply;
+        const ID = req.params.id;
+        const preview = await prisma.review.findFirst({
+            where:{
+                id: String(ID)
+            }
+        })
+        if(!preview?.comment || String(reply) === ''){throw new Error("Error! Attempt to send Improper Reply!")}
+        const review = await prisma.review.update({
+            where:{
+                id: String(ID),
+            },
+            data:{
+                reply: String(reply),
+                dismiss: true
+            }
+        })
+         
+         
+         res.json(review);
+    }
+    catch(err:any){
+        throw new Error(err);
+    }
+});
+
+const dismissReview = asyncHandler(async(req:any,res)=>{
+    try{
+         if(!req.user.isSeller) throw new Error("not a Seller");
+        const ID = req.params.id;
+        const review = await prisma.review.update({
+            where:{
+                id: String(ID)
+            },
+            data:{
+                dismiss: true
+            }
+        })
+         
+         
+         res.json(review);
     }
     catch(err:any){
         throw new Error(err);
@@ -332,5 +391,7 @@ export {
     deleteProdcuts,
     fetchCategory,
     editProduct,
-    fetchCustomers
+    fetchCustomers,
+    replyReview,
+    dismissReview
 }

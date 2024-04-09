@@ -101,7 +101,6 @@ const verifyUser = asyncHandler( async(req:any,res)=>{
 })
 
 
-
 const logoutUser = asyncHandler(async (req: any, res: any) => {
 
 

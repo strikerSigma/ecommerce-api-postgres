@@ -1,7 +1,7 @@
 import express from 'express';
 
 import {authMiddleware} from  '../middleware/authMiddleware';
-import { FetchAnalytics, FetchCustomerbyID, FetchInbox, changeOrderStatus, deleteProdcuts, editProduct, fetchCategory, fetchCustomers, fetchProdcuts } from '../controllers/dashboardUrls';
+import { FetchAnalytics, FetchCustomerbyID, FetchInbox, changeOrderStatus, deleteProdcuts, dismissReview, editProduct, fetchCategory, fetchCustomers, fetchProdcuts, replyReview } from '../controllers/dashboardUrls';
 
 
 
@@ -18,6 +18,8 @@ adminRouter.get('/category/:id',authMiddleware, fetchCategory);
 adminRouter.post('/edit-product/:id',authMiddleware, editProduct);
 adminRouter.get('/customers',authMiddleware, fetchCustomers);
 adminRouter.get('/notifications',authMiddleware, fetchCustomers);
+adminRouter.post('/reply/:id',authMiddleware, replyReview);
+adminRouter.get('/dismiss-review/:id',authMiddleware, dismissReview);
 
 
  
