@@ -332,34 +332,39 @@ const fetchCustomers = asyncHandler(async(req:any,res)=>{
 });
 
 
-const replyReview = asyncHandler(async(req:any,res)=>{
-    try{
-         if(!req.user.isSeller) throw new Error("not a Seller");
-        const reply= req.body.reply;
+const replyReview = asyncHandler(async (req: any, res: any) => {
+    try {
+        if (!req.user.isSeller) {
+            return res.status(403).json({ error: "You are not authorized to perform this action." });
+        }
+
+        const reply = req.body.reply;
         const ID = req.params.id;
-        const preview = await prisma.review.findFirst({
-            where:{
-                id: String(ID)
-            }
-        })
-        if(!preview?.comment || String(reply) === ''){throw new Error("Error! Attempt to send Improper Reply!")}
-        const review = await prisma.review.update({
-            where:{
-                id: String(ID),
-            },
-            data:{
-                reply: String(reply),
-                dismiss: true
-            }
-        })
-         
-         
-         res.json(review);
-    }
-    catch(err:any){
-        throw new Error(err);
+
+        const review = await prisma.review.findFirst({
+            where: { id: String(ID) }
+        });
+
+        if (!review) {
+            return res.status(404).json({ error: "Review not found." });
+        }
+
+        if (!review.comment || String(reply) === '') {
+            return res.status(400).json({ error: "Error! Attempt to send improper reply." });
+        }
+
+        const updatedReview = await prisma.review.update({
+            where: { id: String(ID) },
+            data: { reply: String(reply), dismiss: true }
+        });
+
+        res.json(updatedReview);
+    } catch (err) {
+        console.error("Error:", err);
+        res.status(500).json({ error: "Internal server error." });
     }
 });
+
 
 const dismissReview = asyncHandler(async(req:any,res)=>{
     try{
