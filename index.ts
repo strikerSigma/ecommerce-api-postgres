@@ -37,7 +37,7 @@ app.use('/profile', express.static(path.join(__dirname, `${directory}/Profile`))
 // multer for file upload to disk
 const storage = multer.diskStorage({
     destination: (req,file,cb)=>{
-        cb(null,path.join(__dirname,'public/images'))
+        cb(null,path.join(__dirname,`${directory}/images`))
     },
     filename: (req,file,cb)=>{
         cb(null,file.originalname+'_'+Date.now()+path.extname(file.originalname))
