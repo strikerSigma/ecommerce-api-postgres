@@ -30,8 +30,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/api/user',authRouter)
 app.use('/admin',adminRouter)
 app.use('/app',appRouter)
-app.use('/images', express.static(path.join(__dirname, 'public/images')));
-app.use('/profile', express.static(path.join(__dirname, 'public/Profile')));
+let directory:any = 'public';
+if(process.env.BUILD){directory = '../public'}
+app.use('/images', express.static(path.join(__dirname, `${directory}/images`)));
+app.use('/profile', express.static(path.join(__dirname, `${directory}/Profile`)));
 // multer for file upload to disk
 const storage = multer.diskStorage({
     destination: (req,file,cb)=>{

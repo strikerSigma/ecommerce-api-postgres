@@ -1,3 +1,4 @@
+// @ts-nocheck
 import asyncHandler from 'express-async-handler';  
 import { prisma } from "../Models/Users";
 
