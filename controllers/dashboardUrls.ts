@@ -319,7 +319,7 @@ const fetchCustomers = asyncHandler(async(req:any,res)=>{
          console.log(customers)
          let notifications:any = await prisma.review.findMany({
             where:{
-             dismiss: false,
+             dismiss: 0,
              reply: null   
             }
          })
@@ -356,7 +356,7 @@ const replyReview = asyncHandler(async (req: any, res: any) => {
 
         const updatedReview = await prisma.review.update({
             where: { id: String(ID) },
-            data: { reply: String(reply), dismiss: true }
+            data: { reply: String(reply), dismiss: 1, }
         });
 
         res.json(updatedReview);
@@ -376,7 +376,7 @@ const dismissReview = asyncHandler(async(req:any,res)=>{
                 id: String(ID)
             },
             data:{
-                dismiss: true
+                dismiss: 1
             }
         })
          
