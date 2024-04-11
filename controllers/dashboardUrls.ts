@@ -306,6 +306,7 @@ const fetchCustomers = asyncHandler(async(req:any,res)=>{
     try{
          if(!req.user.isSeller) throw new Error("not a Seller");
         const {page} = req.query;
+        // console.log(await prisma.review.findMany());
          const customers = await prisma.customer.findMany({
             skip: 6*Number(page-1),
             take: 6,
@@ -319,7 +320,6 @@ const fetchCustomers = asyncHandler(async(req:any,res)=>{
          console.log(customers)
          let notifications:any = await prisma.review.findMany({
             where:{
-             dismiss: 0,
              reply: null   
             }
          })
@@ -328,6 +328,7 @@ const fetchCustomers = asyncHandler(async(req:any,res)=>{
          res.json({customers,notifications});
     }
     catch(err:any){
+        res.status(403).json(err);
         throw new Error(err);
     }
 });
@@ -356,7 +357,7 @@ const replyReview = asyncHandler(async (req: any, res: any) => {
 
         const updatedReview = await prisma.review.update({
             where: { id: String(ID) },
-            data: { reply: String(reply), dismiss: 1, }
+            data: { reply: String(reply) }
         });
 
         res.json(updatedReview);
@@ -376,7 +377,7 @@ const dismissReview = asyncHandler(async(req:any,res)=>{
                 id: String(ID)
             },
             data:{
-                dismiss: 1
+                reply: ''
             }
         })
          
