@@ -13,10 +13,16 @@ export const hashPassword = async (password: string) => {
   }
 };
 export const  validateUser=async(hash:any,password:any)=>{
-    return await bcrypt
+    try{
+      const dectpted= await bcrypt
       .compare(password, hash)
       .then(res => {
         return res // return true
       })
-      .catch(err => {throw new Error("Can't hash password");})        
+      .catch(err => {throw new Error("Can't hash password");})  
+      return dectpted
+    }
+    catch(e:any){
+        throw new Error(e)
+    }
 }
